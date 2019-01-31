@@ -83,7 +83,7 @@ print(parser.env)
 
 - A plugin can be registered using a decorator or a method. The following are equivalent
 ```python
-@parser.plugin_store.register:
+@parser.plugin_store.register
 def add(a, b):
     return a + b
 
@@ -94,7 +94,7 @@ parser.plugin_store.add(add)
 
 - Plugins have direct access to the environment being constructed and can alter it
 ```python
-@parser.plugin_store.register:
+@parser.plugin_store.register
 def new_variable(*, env):
     env['var'] = 0
 ```
