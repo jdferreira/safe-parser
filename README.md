@@ -98,11 +98,12 @@ parser.plugin_store.add(add)
 def new_variable(*, env):
     env['var'] = 0
 ```
+For this to work, the plugin function must have a non-optional keyword-only argument named `env`. Note that the environment is not a python dictionary, but it behaves like one, except that it does not allow double-underscore variables (see limitations below), and that the methods `keys()` and `values()` are not implemented.
 
 
 ## Limitations
 
-- Because of how the code works, and also to not hinder future development, double-underscore variable names are not allowed. This is, on the one hand, so that we can safely inject an empty __builtins__` into the evaluation of the code, as well as to allow injecting the current environment's state into plugins that request it (see above).
+- Because of how the code works, and also to not hinder future development, double-underscore variable names are not allowed. This is, on the one hand, so that we can safely inject an empty `__builtins__` into the evaluation of the code, as well as to allow injecting the current environment's state into plugins that request it (see above).
 
 - At the moment, I am not allowing expressions other than calls and literal. This means that the input does not allow binray operation, for example, unlike the `ast.literal_eval` function.
 

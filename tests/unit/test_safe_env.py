@@ -24,8 +24,6 @@ def test_safe_env_can_get_the_value_associated_with_a_key():
     assert env.get('a') == 0
     assert env.get('b') == None
     assert env.get('c', 'default') == 'default'
-    assert env.get('__hidden__') == None
-    assert env.get('__another_hidden__') == None
 
 
 def test_safe_env_fails_to_get_value_associated_with_double_underscore_keys():
@@ -37,8 +35,19 @@ def test_safe_env_fails_to_get_value_associated_with_double_underscore_keys():
     with pytest.raises(KeyError):
         env['__another_hidden__']
 
+    assert env.get('__hidden__') == None
+    assert env.get('__another_hidden__') == None
 
-def test_put_in_safe_env_delegates_to_a_dict():
+
+def test_safe_env_can_put_items():
+    env = SafeEnv({})
+
+    env['a'] = 0
+
+    assert env['a'] == 0
+
+
+def test_safe_env_delegates_to_inner_dict_when_putting_item():
     inner = {}
     env = SafeEnv(inner)
     env['a'] = 1
@@ -46,8 +55,8 @@ def test_put_in_safe_env_delegates_to_a_dict():
     assert inner == {'a': 1}
 
 
-def test_safe_env_rejects_double_underscore_keys():
-    inner = {}
+def test_safe_env_fails_when_putting_double_underscore_keys():
+    inner = {'__hidden__': 0}
     env = SafeEnv(inner)
 
     with pytest.raises(KeyError):
@@ -56,20 +65,33 @@ def test_safe_env_rejects_double_underscore_keys():
     with pytest.raises(KeyError):
         env.setdefault('__hidden__', None)
 
-    assert inner == {}
+    with pytest.raises(KeyError):
+        env['__another_hidden__'] = None
+
+    with pytest.raises(KeyError):
+        env.setdefault('__another_hidden__', None)
+
+    assert inner == {'__hidden__': 0}
 
 
 def test_safe_env_can_delete_items():
-    inner = {'a': 0, '__hidden__': 0}
-    env = SafeEnv(inner)
+    env = SafeEnv({'a': 0})
 
     del env['a']
 
     assert len(env) == 0
-    assert len(inner) == 1
 
 
-def test_safe_env_fails_to_delete_items_with_double_underscore_keys():
+def test_safe_env_delegates_to_inner_dict_when_deleting_item():
+    inner = {'a': 1}
+    env = SafeEnv(inner)
+
+    del env['a']
+
+    assert inner == {}
+
+
+def test_safe_env_fails_when_deleting_items_with_double_underscore_keys():
     inner = {'a': 0, '__hidden__': 0}
     env = SafeEnv(inner)
 
@@ -117,8 +139,9 @@ def test_safe_env_can_pop():
     inner = {'a': 0, '__hidden__': 0}
     env = SafeEnv(inner)
 
-    env.pop('a')
+    value = env.pop('a')
 
+    assert value == 0
     assert inner == {'__hidden__': 0}
     assert env.pop('a', 'default') == 'default'
     assert env.pop('__hidden__', 'default') == 'default'
@@ -128,7 +151,7 @@ def test_safe_env_can_pop():
         env.pop('__hidden__')
 
 
-def test_safe_env_can_popitem():
+def test_safe_env_implements_popitem():
     inner = {'a': 0, '__hidden__': 0}
     env = SafeEnv(inner)
 
@@ -137,22 +160,45 @@ def test_safe_env_can_popitem():
     assert item == ('a', 0)
     assert 'a' not in inner
 
+    assert inner == {'__hidden__': 0}
+
     with pytest.raises(KeyError):
         env.popitem()
 
 
-@pytest.fixture
-def rand_string_creator():
+def generate_keys(key_size, amount):
+    """
+    Returns a list of `amount` distinct randomly generated keys in a random
+    order. Each key is a string with `key_size` consecutive lower case letters,
+    wrapped in double underscores.
+
+    For example:
+
+    >>> generate_keys(3, 2)
+    ['__abc__', '__def__']
+    """
+
     from random import choice
 
     chars = 'abcdefghijklmnopqrstuvwxyz'
 
-    return lambda size: ''.join(choice(chars) for _ in range(size))
+    # We use a set to quickly detect duplicates
+    result = set()
+
+    while len(result) < amount:
+        result.add(
+            '__' + ''.join(choice(chars) for _ in range(key_size)) + '__'
+        )
+
+    # Notice that the returned value is a list, not a set
+    return list(result)
 
 
-def test_safe_env_popitem_preserves_order(rand_string_creator):
-    keys = ['__' + rand_string_creator(5) + '__' for _ in range(100)]
-    keys = list(set(keys))  # Remove duplicates, if any, just to make sure
+def test_safe_env_popitem_preserves_order():
+    # This is only relevant for python 3.7 and above, where dictionary order has
+    # been stabilized
+
+    keys = generate_keys(100, 5)
 
     inner = {'a': 0}
     for key in keys:
@@ -182,7 +228,7 @@ def test_safe_env_setdefault():
         env.setdefault('__another_hidden__', 'not-0')
 
 
-def test_safe_evn_can_bu_updated():
+def test_safe_env_can_be_updated():
     inner = {'a': 0, '__hidden__': 0}
     env = SafeEnv(inner)
 
@@ -200,17 +246,17 @@ def test_safe_evn_can_bu_updated():
 def test_safe_env_can_be_represented():
     inner = {'a': 0}
     env = SafeEnv(inner)
-    
+
     assert repr(env) == 'SafeEnv({\'a\': 0})'
-    
+
     inner['__self__'] = 0
-    
+
     assert repr(env) == 'SafeEnv({\'a\': 0})'
-    
+
     inner['__self__'] = inner
-    
+
     assert repr(env) == 'SafeEnv({\'a\': 0})'
-        
-    inner['self'] = env
-    
+
+    env['self'] = env
+
     assert repr(env) == 'SafeEnv({\'a\': 0, \'self\': SafeEnv({...})})'
