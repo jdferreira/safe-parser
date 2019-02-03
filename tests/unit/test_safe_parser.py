@@ -18,6 +18,10 @@ def test_parsers_can_parse_strings(parser):
     assert parser.env == {'a': 0}
 
 
+def test_parse_method_returns_the_environment(parser):
+    assert parser.parse('a = 0') == {'a': 0}
+
+
 def test_parsers_can_parse_files(parser, tmp_path):
     path = tmp_path / 'tmp.txt'
     path.write_text('a = 0')
@@ -84,7 +88,7 @@ def test_parsers_accept_safe_values(parser):
             {'': 0},
         ]
     '''))
-    
+
     assert parser.env['valid'] == [
         None,
         False,
@@ -96,6 +100,7 @@ def test_parsers_accept_safe_values(parser):
         {''},
         {'': 0},
     ]
+
 
 def test_parsers_reject_valid_python_syntax_that_is_unsafe(parser):
     bad_inputs = [
@@ -238,14 +243,13 @@ def test_parser_plugins_cannot_access_or_create_double_underscore_variables(pars
     @parser.plugin_store.register
     def fn1(*, env):
         a = env['__env__']
-    
+
     @parser.plugin_store.register
     def fn2(*, env):
         env['__a__'] = 0
-    
+
     with pytest.raises(KeyError):
         parser.parse('fn1()')
-    
+
     with pytest.raises(KeyError):
         parser.parse('fn2()')
-    

@@ -168,6 +168,8 @@ class Parser:
             # possibility of examining the environment
             self.strip_environment()
 
+        return self.env
+
     def prepare_content(self, content):
         if isinstance(content, str):
             return content
