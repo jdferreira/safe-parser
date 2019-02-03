@@ -5,7 +5,7 @@ with open('README.md') as f:
 
 setuptools.setup(
     name='safe-parser',
-    version='0.1.2',
+    version='0.1.3',
     author='João D. Ferreira',
     author_email='jotomicron@gmail.com',
     description='A simple parser of python-line code that can be safely executed',
