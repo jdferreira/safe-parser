@@ -144,7 +144,7 @@ class Parser:
         self.plugin_store = plugin_store
 
     def parse(self, content):
-        content = self.prepare_content(content)
+        content = self.read_content(content)
 
         try:
             root = ast.parse(content, filename='')
@@ -170,7 +170,7 @@ class Parser:
 
         return self.env
 
-    def prepare_content(self, content):
+    def read_content(self, content):
         if isinstance(content, str):
             return content
 
