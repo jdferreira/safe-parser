@@ -153,6 +153,8 @@ class Parser:
 
         SafeCodeValidator(self.plugin_store).visit(root)
 
+        self.process_root(root)
+
         # Since we're using python's eval function to actually evaluate
         # expressions, we must ensure that no builtin python functions leak into
         # the environment. Also, there are other important preparations that
@@ -181,6 +183,22 @@ class Parser:
                 f'Cannot read the contents of a {type(content)} variable'
             )
 
+    def process_root(self, root):
+        """
+        This function is meant to be implemented by a subclass. It can be used
+        to perform further validations on the parsed AST or to transform it. By
+        default, this method does nothing.
+        """
+        pass
+    
+    def process_stmt(self, stmt):
+        """
+        This function is meant to be implemented by a subclass. It can be used
+        to perform transformations on each parsed statement of the AST. By
+        default, this method does nothing.
+        """
+        pass
+
     def prepare_environment(self):
         self.env['__builtins__'] = {}
         self.env['__env__'] = SafeEnv(self.env)
@@ -191,6 +209,8 @@ class Parser:
 
     def execute(self, root):
         for stmt in root.body:
+            self.process_stmt(stmt)
+            
             if isinstance(stmt, ast.Assign):
                 self.execute_assign(stmt)
             elif isinstance(stmt, ast.Expr):
