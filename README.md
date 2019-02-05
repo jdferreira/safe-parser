@@ -102,6 +102,36 @@ def new_variable(*, env):
 ```
 For this to work, the plugin function must have a non-optional keyword-only argument named `env`. Note that the environment is not a python dictionary, but it behaves like one, except that it does not allow double-underscore variables (see limitations below), and that the methods `keys()` and `values()` are not implemented.
 
+- Subclasses of the `Parser` class can implement the `process_root` method to further process the parsed AST. The following example changes all tuples literals to lists:
+```python
+import ast
+
+class TupleToList(ast.NodeTransformer):
+    def visit_Tuple(self, node):
+        return ast.copy_location(ast.List(
+            elts=[self.visit(elt) for elt in node.elts]
+        ), node)
+
+class MyParser(Parser):
+    def process_root(self, root):
+        TupleToList().visit(root)  # Convert all tuples to lists
+```
+
+- Subclasses of the `Parser` class can also implement the `process_stmt` method, which receives each individual statement on the input. This allows the parser to make transformations based on the current content of the parser's environment. The following example validates that a dict can only be constructed if the environment contains a variable called `allow_dict` with the value `True`:
+```python
+import ast
+
+class ErrOnDict(ast.NodeVisitor):
+    def visit_Dict(self, node):
+        raise Exception(
+            'Cannot create a dictionary without `allow_dict = True`.'
+        )
+
+class MyParser(Parser):
+    def process_stmt(self, stmt):
+        if self.env.get('allow_dict') is True:
+            ErrOnDict().visit(stmt)
+```
 
 ## Limitations
 
