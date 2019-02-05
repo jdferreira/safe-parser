@@ -102,6 +102,10 @@ class SafeCodeValidator(ast.NodeVisitor):
         for elt in node.elts:
             self.visit(elt)
 
+    def visit_Tuple(self, node):
+        for elt in node.elts:
+            self.visit(elt)
+
     def visit_Set(self, node):
         for elt in node.elts:
             self.visit(elt)
