@@ -198,7 +198,7 @@ def test_safe_env_popitem_preserves_order():
     # This is only relevant for python 3.7 and above, where dictionary order has
     # been stabilized
 
-    keys = generate_keys(100, 5)
+    keys = generate_keys(5, 100)
 
     inner = {'a': 0}
     for key in keys:
