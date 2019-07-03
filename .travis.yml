@@ -2,4 +2,4 @@ language: python
 dist: xenial # Required for python >= 3.7 (as per https://docs.travis-ci.com/user/languages/python/)
 python: "3.7"
 
-script: pytest
+script: python -m pytest
